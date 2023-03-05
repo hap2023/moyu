@@ -7,21 +7,30 @@ export default class Index extends Component<PropsWithChildren> {
     context: {}
   }
 
-  componentDidMount() {}
+  componentDidMount() { }
 
-  componentWillUnmount() {}
+  componentWillUnmount() { }
 
-  componentDidShow() {}
+  componentDidShow() { }
 
-  componentDidHide() {}
+  componentDidHide() { }
 
   getLogin = () => {
     Taro.cloud
       .callFunction({
-        name: "login",
-        data: {}
+        name: "user-questions",
+        // name: "user-created",
+        // name: "user-answered",
+        data: {
+          $url: 'get',
+          type: 'created',//集合名称
+          // type: 'answered',
+          // type: 'collected',
+        }
       })
       .then(res => {
+        console.log(res);
+
         this.setState({
           context: res.result
         })

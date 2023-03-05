@@ -5,18 +5,20 @@ import './app.scss'
 
 class App extends Component<PropsWithChildren> {
 
-  componentDidMount () {
+  componentDidMount() {
     if (process.env.TARO_ENV === 'weapp') {
-      Taro.cloud.init()
+      Taro.cloud.init({
+        env: 'group-status-dev-2ffq2ji8618498b',
+      })
     }
   }
 
-  componentDidShow () {}
+  componentDidShow() { }
 
-  componentDidHide () {}
+  componentDidHide() { }
 
   // this.props.children 是将要会渲染的页面
-  render () {
+  render() {
     return this.props.children
   }
 }

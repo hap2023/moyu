@@ -9,7 +9,7 @@ function getUnixTime(dateStr) {
 //时间戳转日期,falg:true表示只要年月日,part: year month date
 function toDate(number, flag, part) {
   var n = number;
-  var date = new Date(parseInt(n) * 1000);
+  var date = new Date(parseInt(n));
   var y = date.getFullYear();
   var m = date.getMonth() + 1;
   m = m < 10 ? ('0' + m) : m;
@@ -127,12 +127,14 @@ const formatDateThis = date => {
   return [year, month, day].map(formatNumber).join('-') + ' ' + [hour, minute, second].map(formatNumber).join(':');
 }
 
+// 返回"年-月-日"
 const formatTime = date => {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
   return [year, month, day].map(formatNumber).join('-');
 }
+// 返回"时:分:秒"
 const formatTimes = time => {
   const hour = time.getHours();
   const minute = time.getMinutes();

@@ -2,12 +2,35 @@ import { Component, PropsWithChildren } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text, Button } from '@tarojs/components'
 
+import { formatTime, toDate } from "../../utils/dateUtil";
 export default class Index extends Component<PropsWithChildren> {
   state = {
     context: {}
   }
 
-  componentDidMount() { }
+  componentDidMount() {
+    const now = formatTime(new Date())
+    console.log(now);
+
+    Taro.cloud
+      .callFunction({
+        name: "user",
+
+
+        data: {
+          $url: 'info',
+
+        }
+      })
+      .then(res => {
+        console.log(res);
+        console.log(res.result.data.create_time);
+        const date = toDate(res.result.data.create_time)
+        console.log(date);
+
+
+      })
+  }
 
   componentWillUnmount() { }
 
@@ -18,14 +41,18 @@ export default class Index extends Component<PropsWithChildren> {
   getLogin = () => {
     Taro.cloud
       .callFunction({
-        name: "user-questions",
-        // name: "user-created",
-        // name: "user-answered",
+        name: "question",
+        // name: "user-questions",
+
         data: {
-          $url: 'get',
-          type: 'created',//集合名称
-          // type: 'answered',
-          // type: 'collected',
+          // $url: 'search',
+          $url: 'detail',
+          // $url: 'latest',
+          questionId: '99b41a676404c4c40086db4536e3d9ca',
+          // questionId: 'xsdgehqrhqehehehehe',
+          // questionId: '0122a58763ff7a6c028434f62729cad8',
+          // page: 0,
+          // searchText: '测试'
         }
       })
       .then(res => {
@@ -35,6 +62,8 @@ export default class Index extends Component<PropsWithChildren> {
           context: res.result
         })
       })
+
+
   }
 
   render() {

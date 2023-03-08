@@ -2,7 +2,7 @@
   "name": "moyu",
   "version": "1.0.0",
   "private": true,
-  "description": "摸鱼了么",
+  "description": "今天了么",
   "templateInfo": {
     "name": "wxcloud",
     "typescript": true,

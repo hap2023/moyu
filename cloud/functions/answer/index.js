@@ -22,11 +22,11 @@ exports.main = async (event, context) => {
   // 1.today 用户对该问题今天的回答 (redis24小时过期)
   app.router('today', async (ctx, next) => {
     const data = await db.collection(collection).where({ user_openid: OPENID, user_unionid: UNIONID, quesion_id: questionId }).get()
-    ctx.body = { data }
+    ctx.body = { code:0,data }
   })
 
   // 2.add 添加用户对该问题今天的回答
-  // 集合question的answer_counts字段增1
+  // 集合question的total_answers字段增1
 
   // 3.update 修改用户对该问题今天的回答(redis24小时过期)
 

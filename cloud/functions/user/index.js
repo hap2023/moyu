@@ -6,9 +6,8 @@ const TcbRouter = require('tcb-router')
 const db = cloud.database()
 const _ = db.command
 const $ = db.command.aggregate
-// 云函数入口函数
+// 用户信息
 exports.main = async (event, context) => {
-  const collection = 'user' //用户信息数据库的名称
 
   const app = new TcbRouter({ event })
   // const { } = event
@@ -26,72 +25,42 @@ exports.main = async (event, context) => {
   app.router('info', async (ctx, next) => {
     try {
 
-      const data = await db.collection(collection).where({ 
-        // openid: OPENID, 
-        unionid: UNIONID 
-      }).get();
-      if (data.length) {
+      const { data } = await db.collection('user')
+        .where({
+          // openid: OPENID, 
+          unionid: UNIONID
+        }).get();
+      if (data && data.length) {
         // 返回用户信息
-        ctx.body = { code:0,data:data[0] }
+        ctx.body = { code: 0, data: data[0] }
       } else {
-        const administrator = process.env.ADMIN.split('|');//管理员列表
-        const role = administrator.indexOf(OPENID) == -1 ? "user" : 'admin';//角色：管理员/用户
+        // const administrator = process.env.ADMIN.split('|');//管理员列表
+        // const role = administrator.indexOf(OPENID) == -1 ? "user" : 'admin';//角色：管理员/用户
         const now = Date.now()
+        const newUser = {
+          avatar_url: "",
+          // create_time: db.serverDate(),
+          create_time: now,
+          first_login_from: 'wechat',
+          last_login_from: 'wechat',
+          last_login_time: now,
+          nick_name: "",
+          openid: OPENID,
+          role: 'user',
+          unionid: UNIONID,
+        }
+
         // 创建用户
-        const result = await db.collection(userCollection).add({
-          data: {
-            avatar_url: "",
-            create_time: now,
-            first_login_from: 'wechat',
-            nick_name: "",
-            openid: OPENID,
-            role,
-            unionid: UNIONID,
-          }
+        const result = await db.collection('user').add({
+          data: newUser
         });
-         // 返回用户信息
-        ctx.body = { code:0,data:result[0] }
+        // 返回用户信息
+        ctx.body = { code: 0, msg: '创建新用户成功', data: result }
       }
     } catch (error) {
-      return {code:1,msg:'读取用户信息失败',data:err}
-    }
-
-
-  })
-
-
-  // 2.用户收藏过的问题user-collected
-  app.router('collected', async (ctx, next) => {
-    try {
-
-      const data = await db.collection(userCCollection).where({ 
-        // user_openid: OPENID, 
-        user_unionid: UNIONID ,
-
-      }).get();
-      ctx.body = { code:0,data }
-    } catch (error) {
-      return {code:1,msg:'读取用户收藏问题失败',data:err}
+      ctx.body = { code: 1, msg: '读取用户信息失败', data: error }
     }
   })
-
-
-
-  // 4.用户创建过的问题user-created
-  app.router('created', async (ctx, next) => {
-    try {
-
-      const data = await db.collection(userCreatedCollection).where({ 
-        // user_openid: OPENID, 
-        user_unionid: UNIONID ,
-
-      }).get();
-      ctx.body = { code:0,data }
-    } catch (error) {
-      return {code:1,msg:'读取用户创建过的问题失败',data:err}
-    }
-  })
-
 
   return app.serve();
 }

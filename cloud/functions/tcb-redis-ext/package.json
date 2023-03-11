@@ -1,16 +1,18 @@
 {
-  "name": "user",
+  "name": "redis_demo",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@git.code.oa.com:guobinzhang/redis_demo.git"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "wx-server-sdk": "~2.6.3",
-    "tcb-router": "latest",
-    "ioredis": "5.2.0"
+    "redis": "^3.0.2"
   }
 }

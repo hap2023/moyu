@@ -2,7 +2,7 @@
   "miniprogramRoot": "client/dist/",
   "cloudfunctionRoot": "cloud/functions/",
   "projectname": "moyu",
-  "description": "摸鱼了么",
+  "description": "今天了么",
   "appid": "wxe1cfbb8acace2199",
   "setting": {
     "urlCheck": true,

@@ -11,6 +11,18 @@ const redis = new Redis({
 
 exports.redis = redis
 
+// exports.createRedis = () => {
+//   return {
+//     redis: new Redis({
+//       host: "10.0.0.17",
+//       port: '6379',
+//       // family: 4,
+//       password: 'hapredis123',
+//       // db: 0
+//     })
+//   }
+
+// }
 
 /**
  * 加redis全局锁

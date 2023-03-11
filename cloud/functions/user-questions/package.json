@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "wx-server-sdk": "~2.6.3",
-    "tcb-router": "latest"
+    "tcb-router": "latest",
+    "ioredis": "5.2.0"
   }
 }

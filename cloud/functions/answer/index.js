@@ -22,24 +22,37 @@ exports.main = async (event, context) => {
   // TODO: 1.today 获取用户对该问题今天的回答 (redis24小时过期)
   app.router('today', async (ctx, next) => {
     const data = await db.collection(collectionName).where({ user_openid: OPENID, user_unionid: UNIONID, quesion_id: questionId }).get()
-    ctx.body = { code:0,data }
+    ctx.body = { code: 0, data }
   })
 
-  //TODO: 2.add 添加用户对该问题今天的回答
+  //TODO: 2.add 添加今天用户对该问题的回答
   // 集合question的total_answers字段增1
   app.router('add', async (ctx, next) => {
     const data = await db.collection(collectionName).where({ user_openid: OPENID, user_unionid: UNIONID, quesion_id: questionId }).get()
-    ctx.body = { code:0,data }
+    ctx.body = { code: 0, data }
+
+    // TODO:把问题ID保存到集合user-questions的answered_questions和对应的缓存中去
+    cloud.callFunction({
+      name: 'user-questions',
+      data: {
+        $url: 'add',
+        questionId: questionId,
+        type: "answered",
+        unionid: UNIONID,
+        openid: OPENID
+      }
+    }).then(res => { })
   })
   // TODO: 3.update 修改用户对该问题今天的回答
   app.router('update', async (ctx, next) => {
     const data = await db.collection(collectionName).where({ user_openid: OPENID, user_unionid: UNIONID, quesion_id: questionId }).get()
-    ctx.body = { code:0,data }
+    ctx.body = { code: 0, data }
   })
-  //TODO:  4.history 用户对该问题的过往的回答(redis24小时过期)
+
+  //TODO: 4.history 用户对该问题的回答记录(redis24小时过期)
   app.router('history', async (ctx, next) => {
     const data = await db.collection(collectionName).where({ user_openid: OPENID, user_unionid: UNIONID, quesion_id: questionId }).get()
-    ctx.body = { code:0,data }
+    ctx.body = { code: 0, data }
   })
 
   return app.serve();

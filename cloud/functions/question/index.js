@@ -57,6 +57,13 @@ exports.main = async (event, context) => {
 
     } catch (error) {
       ctx.body = { code: 1, msg: '搜索问题失败', data: error }
+      // 记录日志
+      logger.error({
+        type: error.name,
+        message: error.message,
+        url: event.$url
+
+      });
     }
   })
   // 2.hot 热门问题(按回答人数)
@@ -119,6 +126,13 @@ exports.main = async (event, context) => {
 
     } catch (error) {
       ctx.body = { code: 1, msg: '获取热门问题失败', data: error }
+      // 记录日志
+      logger.error({
+        type: error.name,
+        message: error.message,
+        url: event.$url
+
+      });
     }
     // await cacheUtil.redis.quit();
   })
@@ -182,6 +196,13 @@ exports.main = async (event, context) => {
 
     } catch (error) {
       ctx.body = { code: 1, msg: '获取最新问题失败', data: error }
+      // 记录日志
+      logger.error({
+        type: error.name,
+        message: error.message,
+        url: event.$url
+
+      });
     }
     // await cacheUtil.redis.quit();
   })
@@ -189,7 +210,8 @@ exports.main = async (event, context) => {
   // 4.detail 问题详情
   app.router('detail', async (ctx, next) => {
     try {
-      const { questionId } = event
+      const { questionId, notAddViewers } = event
+
       if (!questionId) {
         ctx.body = { code: 1, msg: '问题ID不能为空', }
         return;
@@ -250,7 +272,7 @@ exports.main = async (event, context) => {
             // 删掉options
             delete result.options
           }
-          // 把剩余的结果缓存起来
+          // 把不包括options的结果缓存起来
           await cacheUtil.redis.hset(cacheKey, result)
         } else {
           ctx.body = { code: 0, data: null, msg: '问题为空' }
@@ -260,12 +282,22 @@ exports.main = async (event, context) => {
       }
 
       // 记录今天的浏览数加1
-      cacheUtil.redis.pfadd(`question:today:${date}:${questionId}:viewers`, UNIONID, res => {
-        cacheUtil.redis.expire(`question:today${date}:${questionId}:viewers`, 60 * 60 * 48);//保留48小时
-      })
+      if (!notAddViewers) {
+        cacheUtil.redis.pfadd(`today:${date}:${questionId}:viewers`, UNIONID, res => {
+          cacheUtil.redis.expire(`today${date}:${questionId}:viewers`, 60 * 60 * 48);//保留48小时
+        })
+      }
+
 
     } catch (error) {
       ctx.body = { code: 1, msg: '读取问题详情失败', data: error }
+      // 记录日志
+      logger.error({
+        type: error.name,
+        message: error.message,
+        url: event.$url
+
+      });
     }
     // await cacheUtil.redis.quit();
   })
@@ -325,6 +357,9 @@ exports.main = async (event, context) => {
         "version": 2,
         "content": options[1].title
       })
+      console.log("内容安全检测result1", result1);
+      console.log("内容安全检测result2", result2);
+      console.log("内容安全检测result3", result3);
       // 问题或选项有一个不是pass状态就将status设置为reviewing,否则自动通过
       let status = "open";//默认为open【公开open, 审核中reviewing, 已关闭closed, 拒绝rejected】
       if (result1.result.suggest != 'pass' || result2.result.suggest != 'pass' || result3.result.suggest != 'pass') {
@@ -333,15 +368,17 @@ exports.main = async (event, context) => {
 
       const finalOptions = [
         {
+          id: 0,
           update_time: now,
           create_time: now,
-          answers: 0,
+          total_answers: 0,
           title: options[0].title
         },
         {
+          id: 1,
           update_time: now,
           create_time: now,
-          answers: 0,
+          total_answers: 0,
           title: options[1].title
         }
       ]
@@ -370,14 +407,32 @@ exports.main = async (event, context) => {
       // 创建新问题
       db.collection(collectionName).add({
         data: newQuestion
-      }).then(res => { })
+      }).then(async data => {
+        if (data['_id']) {
+          // 把问题ID保存到集合user-questions的created_questions和对应的缓存中去
+          cloud.callFunction({
+            name: 'user-questions',
+            data: {
+              $url: 'add',
+              questionId: data['_id'],
+              type: "created",
+              unionid: UNIONID
+            }
+          }).then(res => { })
+        }
+      })
 
       ctx.body = { code: 0, msg: '创建新问题成功' }
 
-      // TODO:把问题ID保存到集合user-questions的answered_questions和对应的缓存中去
-
     } catch (error) {
       ctx.body = { code: 1, msg: '创建问题失败', data: error }
+      // 记录日志
+      logger.error({
+        type: error.name,
+        message: error.message,
+        url: event.$url
+
+      });
     }
 
   })
@@ -387,13 +442,28 @@ exports.main = async (event, context) => {
   app.router('today', async (ctx, next) => {
     try {
       // (redis有效期24小时)
-      const date = dateUtil.formatTime(new Date());//当前日期
-      const cacheKey = `question:today:${date}:${questionId}`
+      const date = dateUtil.formatTime(new Date());//当前年-月-日
+      // 今天的浏览人数
+      const viewers = cacheUtil.redis.pfcount(`today:${date}:${questionId}:viewers`)
+      //今天的回答数
+      const answers = cacheUtil.redis.get(`today:${date}:${questionId}:answers`)
+      // 今天的收藏数
+      const collectors = cacheUtil.redis.get(`today:${date}:${questionId}:collectors`)
 
-
-
+      const todayData = {
+        viewers,
+        answers,
+        collectors
+      }
+      ctx.body = { code: 0, msg: '成功读取问题今天的数据', data: todayData }
     } catch (error) {
-      ctx.body = { code: 1, msg: '读取问题详情失败', data: error }
+      ctx.body = {
+        code: 1, msg: '读取问题详情失败', data: {
+          viewers: 0,
+          answers: 0,
+          collectors: 0
+        }
+      }
     }
     // await cacheUtil.redis.quit();
   })
@@ -413,13 +483,18 @@ exports.main = async (event, context) => {
   app.router('updateStatus', async (ctx, next) => {
     try {
       const { questionId, status } = event
-      // (redis有效期24小时)
+
       const date = dateUtil.formatTime(new Date());//当前年-月-日
       // const cacheKey = `question:today:${date}:${questionId}`
+      // TODO:必须问题创建者才能修改状态
+
+      // TODO:修改状态成功后，需要清除掉该问题详情的缓存
     } catch (error) {
       ctx.body = { code: 1, msg: '读取问题详情失败', data: error }
     }
     // await cacheUtil.redis.quit();
+
+
   })
 
 

@@ -26,9 +26,9 @@ exports.main = async (event, context) => {
   });
 
   // 查询接口
-  app.router('get', async (ctx, next) => {
+  app.router('list', async (ctx, next) => {
     try {
-      // 先看有没有缓存
+
 
       const data = await collection
         .aggregate()
@@ -57,7 +57,7 @@ exports.main = async (event, context) => {
           question: $.mergeObjects([$.arrayElemAt(['$questionList', 0]),]),
         })
         .match({
-          'question.status': 'reviewing',//审核中
+          'question.status': 'open',//审核中
         })
         .project({
           questionList: 0,

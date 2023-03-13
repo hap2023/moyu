@@ -58,8 +58,8 @@ exports.main = async (event, context) => {
             // last_login_time: now,
             nick_name: "",
             openid: OPENID,
-            role: 'user',
             unionid: UNIONID,
+            role: 'user',
           }
 
           // 创建用户表user
@@ -75,13 +75,12 @@ exports.main = async (event, context) => {
         }
       }
 
-      // 再创建用户问题表user-questions
+      //TODO:使用缓存 再创建用户问题表user-questions
       const userQuestions = await db.collection('user-questions').where({
         user_unionid: UNIONID,
       }).get();
 
       if (userQuestions.data.length == 0) {
-
         const result2 = await db.collection('user-questions').add({
           data: {
             create_time: now,
